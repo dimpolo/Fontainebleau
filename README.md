@@ -4,6 +4,11 @@ An interactive map of the July 2026 Fontainebleau forest fire, laid over the
 parkour / bouldering spots in the massif, so you can see which spots the fire
 reached before planning a trip.
 
+**→ [dimpolo.github.io/Fontainebleau](https://dimpolo.github.io/Fontainebleau/)**
+
+The page is marked `noindex` so it stays out of search results, but anyone with
+the link can open it.
+
 Static site: plain [Leaflet](https://leafletjs.com/), no build step, no API
 keys, no accounts. Open `index.html` through any web server and it works.
 
