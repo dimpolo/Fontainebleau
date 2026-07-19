@@ -1,0 +1,592 @@
+{
+ "type": "FeatureCollection",
+ "name": "Fontainebleau spots",
+ "attribution": "Spots from a shared Google My Maps layer",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.696478,
+     48.317319
+    ]
+   },
+   "properties": {
+    "name": "Campingplatz",
+    "kind": "camping",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.720119,
+     48.41477
+    ]
+   },
+   "properties": {
+    "name": "Station Sercice Carrefour Market Avon",
+    "kind": "shop",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.676324,
+     48.268767
+    ]
+   },
+   "properties": {
+    "name": "Carrefour market - Saint-Pierre-lès-Nemours",
+    "kind": "shop",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.418984,
+     48.397063
+    ]
+   },
+   "properties": {
+    "name": "Carrefour market - Milly-la-Forêt",
+    "kind": "shop",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.585562,
+     48.500498
+    ]
+   },
+   "properties": {
+    "name": "Carrefour Drive",
+    "kind": "shop",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.584035,
+     48.501123
+    ]
+   },
+   "properties": {
+    "name": "Decathlon",
+    "kind": "shop",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.626188,
+     48.440044
+    ]
+   },
+   "properties": {
+    "name": "Barbizo",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.624316,
+     48.440506
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Barbizo",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.474798,
+     48.501314
+    ]
+   },
+   "properties": {
+    "name": "Champcuei",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.480253,
+     48.503551
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Champcuei",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.630255,
+     48.439333
+    ]
+   },
+   "properties": {
+    "name": "Doggy Style",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.637377,
+     48.445316
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Doggy Style",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.593927,
+     48.293641
+    ]
+   },
+   "properties": {
+    "name": "Elephant",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.597124,
+     48.293676
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Elephant",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.687203,
+     48.441183
+    ]
+   },
+   "properties": {
+    "name": "Hippodrom",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.689295,
+     48.440938
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Hippodrom",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.532689,
+     48.371223
+    ]
+   },
+   "properties": {
+    "name": "Klein aber fein/ Diplodocus",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.527006,
+     48.363689
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Klein aber fein/ Diplodocus",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.54499,
+     48.3921
+    ]
+   },
+   "properties": {
+    "name": "Kleine Wüste",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.554088,
+     48.390216
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz kleine Wüste",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.638874,
+     48.447129
+    ]
+   },
+   "properties": {
+    "name": "Nuttenparkplatz",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.637389,
+     48.446109
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Nuttenparkplatz",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.730858,
+     48.35677
+    ]
+   },
+   "properties": {
+    "name": "Raumschiff",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.72754,
+     48.354172
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Raumschiff",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.663185,
+     48.463101
+    ]
+   },
+   "properties": {
+    "name": "Rocher Canon",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.665471,
+     48.463251
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Rocher Canon",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.62922,
+     48.408899
+    ]
+   },
+   "properties": {
+    "name": "Schlucht",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.63475,
+     48.409
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Schlucht",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.602982,
+     48.303077
+    ]
+   },
+   "properties": {
+    "name": "Steffis Spot",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.599124,
+     48.303344
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Steffis Spot",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.529417,
+     48.386
+    ]
+   },
+   "properties": {
+    "name": "Thomas‘ Spot",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.519154,
+     48.387513
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Thomas‘ Spot",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.514192,
+     48.374933
+    ]
+   },
+   "properties": {
+    "name": "Vorwüste / Goblin",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.53379,
+     48.361861
+    ]
+   },
+   "properties": {
+    "name": "Waldbrand",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.534266,
+     48.35946
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Waldbrand",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.545736,
+     48.40038
+    ]
+   },
+   "properties": {
+    "name": "Wasserdrache",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.546371,
+     48.401378
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Wasserdrache",
+    "kind": "parking",
+    "group": "other"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.522459,
+     48.376588
+    ]
+   },
+   "properties": {
+    "name": "Wüste",
+    "kind": "spot",
+    "group": "spots"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.51076,
+     48.373081
+    ]
+   },
+   "properties": {
+    "name": "Parkplatz Wüste",
+    "kind": "parking",
+    "group": "other"
+   }
+  }
+ ]
+}

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Fontainebleau — fire &amp; spots</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<style>
+  html, body { height: 100%; margin: 0; }
+  #map { height: 100%; width: 100%; background: #ddd; }
+
+  body {
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #222;
+  }
+
+  .legend {
+    background: rgba(255, 255, 255, .93);
+    padding: 10px 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
+    max-width: 16rem;
+  }
+  .legend h1 { font-size: 15px; margin: 0; display: inline; }
+  .legend > details > summary { cursor: pointer; list-style: none; }
+  .legend > details > summary::-webkit-details-marker { display: none; }
+  .legend > details > summary::before { content: '\25B8\00a0'; }
+  .legend > details[open] > summary::before { content: '\25BE\00a0'; }
+  .legend > details > summary { margin-bottom: 6px; }
+  .legend .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend .swatch {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); flex: none;
+  }
+  .legend .swatch.burnt { border-color: #d32f2f; }
+  /* Copernicus renders the burn as a yellow fill with a red edge. */
+  .legend .swatch.area { border-radius: 3px; background: #d8d23c; border-color: #d32f2f; }
+  .legend .swatch.line {
+    height: 0; border: 0; border-top: 2px dashed #b71c1c;
+    box-shadow: none; border-radius: 0;
+  }
+  .legend .note { font-size: 12px; color: #555; margin-top: 8px; }
+  .legend .warn { color: #b71c1c; font-weight: 600; }
+
+  /* The legend is useful but must not swallow a phone screen. */
+  .legend details > summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  @media (max-width: 600px) {
+    .legend { max-width: 12rem; padding: 8px 9px; font-size: 12px; }
+    .legend h1 { font-size: 13px; }
+    .legend .note { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+/* ------------------------------------------------------------------ *
+ * Fontainebleau: the July 2026 forest fire vs. the parkour / bouldering
+ * spots in the massif.
+ *
+ * Static site: IGN's open Geoplateforme serves the base tiles with no
+ * API key, Copernicus EMS (activation EMSR894) serves the fire overlay,
+ * and the spots and burnt-area polygons live in data/ as GeoJSON.
+ * ------------------------------------------------------------------ */
+
+var ATTR = {
+  ign: '&copy; <a href="https://www.ign.fr/">IGN</a> / G&eacute;oplateforme',
+  osm: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  cems: '&copy; <a href="https://mapping.emergency.copernicus.eu/activations/EMSR894/">Copernicus EMS</a> EMSR894',
+  effis: '&copy; <a href="https://forest-fire.emergency.copernicus.eu/">EFFIS</a>'
+};
+
+/* --- Base maps ----------------------------------------------------- */
+var IGN_WMTS = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
+  + '&LAYER={layer}&STYLE=normal&TILEMATRIXSET=PM&FORMAT={format}'
+  + '&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+
+function ignLayer(layer, format) {
+  return L.tileLayer(IGN_WMTS, {
+    layer: layer, format: format, maxZoom: 19, attribution: ATTR.ign
+  });
+}
+
+var baseLayers = {
+  'Plan IGN': ignLayer('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'),
+  'Satellite (IGN)': ignLayer('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'),
+  'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: ATTR.osm
+  })
+};
+
+var map = L.map('map', {
+  center: [48.40, 2.60],
+  zoom: 12,
+  layers: [baseLayers['Plan IGN']]
+});
+
+/* --- Fire ----------------------------------------------------------- *
+ * Two complementary sources, because neither alone is good enough:
+ *
+ *  - Copernicus EMSR894 is current and precise, but published only as
+ *    pre-rendered tiles (the service is flagged TilesOnly, so it cannot
+ *    be queried for geometry). It is the primary layer.
+ *  - EFFIS gives real polygons, but they are MODIS-derived, coarse, and
+ *    lag by days, so they understate the burn. They are shown as an
+ *    indicative dated outline, and used to flag affected spots.
+ * -------------------------------------------------------------------- */
+var fireTiles = L.tileLayer(
+  'https://tiles.arcgis.com/tiles/rNFYfizUMWjwfBKB/arcgis/rest/services/EMSR894_latest/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, maxNativeZoom: 18, opacity: 0.75, attribution: ATTR.cems }
+).addTo(map);
+
+var burntOutline = L.layerGroup().addTo(map);
+
+/* --- Spots ---------------------------------------------------------- */
+var STYLE = {
+  spot:  { radius: 7, color: '#fff', weight: 2, fillColor: '#1565c0', fillOpacity: 0.95 },
+  other: { radius: 5, color: '#fff', weight: 2, fillColor: '#546e7a', fillOpacity: 0.9 },
+  burnt: { radius: 8, color: '#d32f2f', weight: 3, fillColor: '#1565c0', fillOpacity: 0.95 }
+};
+
+var LABEL = { spot: 'Spot', parking: 'Parking', shop: 'Shop', camping: 'Campsite' };
+
+var spotsLayer = L.layerGroup().addTo(map);
+var otherLayer = L.layerGroup().addTo(map);
+
+/* --- Point in polygon, used to flag spots inside a burnt area ------- */
+function ringsOf(geometry) {
+  if (geometry.type === 'Polygon') return [geometry.coordinates[0]];
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates.map(function (p) { return p[0]; });
+  return [];
+}
+
+function inRing(point, ring) {
+  var x = point[0], y = point[1], inside = false;
+  for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function inAnyBurn(point, burns) {
+  return burns.some(function (feature) {
+    return ringsOf(feature.geometry).some(function (ring) { return inRing(point, ring); });
+  });
+}
+
+/* --- Load data ------------------------------------------------------ */
+function loadJSON(url) {
+  return fetch(url).then(function (r) {
+    if (!r.ok) throw new Error(url + ': ' + r.status);
+    return r.json();
+  });
+}
+
+/* Frame the map on the fire and the spots themselves. A fixed centre and
+   zoom framed them badly on narrow phone screens, and the outlying shops
+   would drag the view too far out to be useful. */
+function extendBounds(bounds, coords) {
+  if (typeof coords[0] === 'number') bounds.extend([coords[1], coords[0]]);
+  else coords.forEach(function (c) { extendBounds(bounds, c); });
+  return bounds;
+}
+
+Promise.all([
+  loadJSON('data/spots.geojson'),
+  loadJSON('data/fire_effis.geojson').catch(function () { return null; })
+]).then(function (results) {
+  var spots = results[0];
+  var fire = results[1];
+  var burns = fire ? fire.features : [];
+  var burntDate = fire && fire.last_update ? fire.last_update.slice(0, 10) : 'unknown date';
+
+  if (fire) {
+    L.geoJSON(fire, {
+      style: { color: '#b71c1c', weight: 2, dashArray: '4 3', fill: false },
+      attribution: ATTR.effis,
+      onEachFeature: function (feature, layer) {
+        var p = feature.properties;
+        layer.bindPopup(
+          '<strong>Burnt area — ' + p.AREA_HA + ' ha</strong><br>' +
+          (p.COMMUNE || '') + '<br>Fire date: ' + (p.FIREDATE || '').slice(0, 10) +
+          '<br><em>EFFIS outline, indicative</em>'
+        );
+      }
+    }).addTo(burntOutline);
+  }
+
+  L.geoJSON(spots, {
+    pointToLayer: function (feature, latlng) {
+      var p = feature.properties;
+      var burnt = p.group === 'spots' && inAnyBurn(feature.geometry.coordinates, burns);
+      p._burnt = burnt;
+      return L.circleMarker(latlng, burnt ? STYLE.burnt : (STYLE[p.group] || STYLE.other));
+    },
+    onEachFeature: function (feature, layer) {
+      var p = feature.properties;
+      var html = '<strong>' + p.name + '</strong><br>' + (LABEL[p.kind] || p.kind);
+      if (p._burnt) {
+        html += '<br><span style="color:#b71c1c"><strong>Inside burnt area</strong>'
+              + ' (EFFIS, ' + burntDate + ')</span>';
+      }
+      layer.bindPopup(html);
+      layer.addTo(p.group === 'spots' ? spotsLayer : otherLayer);
+    }
+  });
+
+  /* Framed on the spots only. They span the massif, which is the area of
+     interest, and the main burn sits inside it. Including the burnt areas
+     here would drag the view out to a separate fire ~15 km to the north
+     east and shrink the massif to a speck on a phone. */
+  var bounds = L.latLngBounds([]);
+  spots.features.forEach(function (f) {
+    if (f.properties.group === 'spots') extendBounds(bounds, f.geometry.coordinates);
+  });
+  if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16], maxZoom: 14 });
+}).catch(function (e) {
+  console.error('could not load map data', e);
+});
+
+/* --- Controls -------------------------------------------------------- */
+var isSmall = window.matchMedia('(max-width: 600px)').matches;
+
+L.control.layers(baseLayers, {
+  'Burnt area (Copernicus)': fireTiles,
+  'Burnt outline (EFFIS)': burntOutline,
+  'Spots': spotsLayer,
+  'Parking &amp; supplies': otherLayer
+}, { collapsed: isSmall }).addTo(map);
+
+L.control.scale({ imperial: false }).addTo(map);
+
+var legend = L.control({ position: 'bottomleft' });
+legend.onAdd = function () {
+  var d = L.DomUtil.create('div', 'legend');
+  /* On a phone the full legend covers too much of the map, so it starts
+     folded away behind its title. */
+  d.innerHTML =
+      '<details' + (isSmall ? '' : ' open') + '>'
+    + '<summary><h1>Fontainebleau fire &amp; spots</h1></summary>'
+    + '<div class="row"><span class="swatch area"></span>Burnt area (Copernicus)</div>'
+    + '<div class="row"><span class="swatch line"></span>Burnt outline (EFFIS)</div>'
+    + '<div class="row"><span class="swatch" style="background:#1565c0"></span>Spot</div>'
+    + '<div class="row"><span class="swatch burnt" style="background:#1565c0"></span>Spot inside burnt area</div>'
+    + '<div class="row"><span class="swatch" style="background:#546e7a"></span>Parking / supplies</div>'
+    + '<div class="note"><span class="warn">The whole massif is closed to the public.</span>'
+    + ' Check official ONF and prefecture notices before travelling.</div>'
+    + '<details class="note"><summary>About the data</summary>'
+    + 'Yellow burn overlay: Copernicus EMS EMSR894 (its green frame is just the'
+    + ' mapped area of interest, not a burn). Dashed outline: EFFIS, satellite-derived,'
+    + ' coarse and updated with a delay &mdash; it understates the burnt area,'
+    + ' so a spot without a red ring is <em>not</em> necessarily unburnt.'
+    + '</details>'
+    + '</details>';
+  L.DomEvent.disableClickPropagation(d);
+  return d;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
