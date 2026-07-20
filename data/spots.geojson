@@ -433,7 +433,7 @@
     ]
    },
    "properties": {
-    "name": "Steffis Spot",
+    "name": "Mammut",
     "kind": "spot",
     "group": "spots"
    }
@@ -443,12 +443,12 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     2.599124,
-     48.303344
+     2.602037,
+     48.302501
     ]
    },
    "properties": {
-    "name": "Parkplatz Steffis Spot",
+    "name": "Parkplatz Mammut",
     "kind": "parking",
     "group": "other"
    }

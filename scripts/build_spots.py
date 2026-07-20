@@ -32,6 +32,23 @@ ICON_KIND = {
     "1765": ("camping", "other"),
 }
 
+# Corrections applied on top of the KML, keyed by placemark name. The shared
+# map belongs to someone else and will not be fixed upstream, so the fixes
+# live here instead of in the generated file, which is overwritten.
+#
+# "Steffis Spot" is this group's nickname for the Mammut boulder at Rocher de
+# Dame Jouanne -- the trip list calls it Mammut, and the Google pin behind that
+# name is the same point to six decimals. Its parking is moved to the Dame
+# Jouanne access point from the same list (geocoded via IGN); the KML pin sits
+# ~230 m west of it.
+OVERRIDES = {
+    "Steffis Spot": {"name": "Mammut"},
+    "Parkplatz Steffis Spot": {
+        "name": "Parkplatz Mammut",
+        "coordinates": [2.602037, 48.302501],
+    },
+}
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "spots.geojson"
 
@@ -57,6 +74,7 @@ def classify(style_url: str) -> tuple[str, str]:
 def main() -> None:
     root = ET.fromstring(fetch_kml())
     features = []
+    applied: set[str] = set()
 
     for pm in find_folder(root).findall("k:Placemark", NS):
         coords = pm.find(".//k:Point/k:coordinates", NS)
@@ -69,11 +87,25 @@ def main() -> None:
         style_el = pm.find("k:styleUrl", NS)
         kind, group = classify(style_el.text if style_el is not None else "")
 
+        coordinates = [round(lon, 6), round(lat, 6)]
+        override = OVERRIDES.get(name)
+        if override:
+            applied.add(name)
+            coordinates = override.get("coordinates", coordinates)
+            name = override.get("name", name)
+
         features.append({
             "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [round(lon, 6), round(lat, 6)]},
+            "geometry": {"type": "Point", "coordinates": coordinates},
             "properties": {"name": name, "kind": kind, "group": group},
         })
+
+    # An override that matches nothing means the upstream map renamed or
+    # dropped that placemark, and the decision behind the override needs
+    # revisiting. Fail rather than quietly publish the unfixed name.
+    missing = sorted(set(OVERRIDES) - applied)
+    if missing:
+        raise SystemExit(f"override names not found in KML: {missing}")
 
     fc = {
         "type": "FeatureCollection",

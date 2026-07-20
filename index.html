@@ -37,6 +37,9 @@
     border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); flex: none;
   }
   .legend .swatch.burnt { border-color: #d32f2f; }
+  .legend .swatch.camp { width: 16px; height: 16px; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+  .legend .swatch.park { background: #fff; border-color: #546e7a; box-shadow: none; }
+  .legend .row em { color: #555; font-size: 12px; font-style: normal; }
   /* Copernicus renders the burn as a yellow fill with a red edge. */
   .legend .swatch.area { border-radius: 3px; background: #d8d23c; border-color: #d32f2f; }
   .legend .swatch.line {
@@ -144,15 +147,24 @@ var burntOutline = L.layerGroup().addTo(map);
 
 /* --- Spots ---------------------------------------------------------- */
 var STYLE = {
-  spot:  { radius: 7, color: '#fff', weight: 2, fillColor: '#1565c0', fillOpacity: 0.95 },
-  other: { radius: 5, color: '#fff', weight: 2, fillColor: '#546e7a', fillOpacity: 0.9 },
-  burnt: { radius: 8, color: '#d32f2f', weight: 3, fillColor: '#1565c0', fillOpacity: 0.95 }
+  spot:    { radius: 7, color: '#fff', weight: 2, fillColor: '#1565c0', fillOpacity: 0.95 },
+  other:   { radius: 5, color: '#fff', weight: 2, fillColor: '#546e7a', fillOpacity: 0.9 },
+  burnt:   { radius: 8, color: '#d32f2f', weight: 3, fillColor: '#1565c0', fillOpacity: 0.95 },
+  /* There is exactly one campsite and it is where a trip starts, so it is
+     styled to stand out rather than blend into the grey supply pins. */
+  camping: { radius: 9, color: '#fff', weight: 3, fillColor: '#2e7d32', fillOpacity: 1 },
+  /* Hollow, so parking reads as secondary and is still tellable from a shop
+     once its layer is switched on -- they shared one grey dot before. */
+  parking: { radius: 5, color: '#546e7a', weight: 2, fillColor: '#fff', fillOpacity: 1 }
 };
 
 var LABEL = { spot: 'Spot', parking: 'Parking', shop: 'Shop', camping: 'Campsite' };
 
 var spotsLayer = L.layerGroup().addTo(map);
-var otherLayer = L.layerGroup().addTo(map);
+var supplyLayer = L.layerGroup().addTo(map);
+/* Parking is off by default: sixteen pins that sit almost on top of the
+   spots they serve, and they are only wanted once a destination is picked. */
+var parkingLayer = L.layerGroup();
 
 /* --- Point in polygon, used to flag spots inside a burnt area ------- */
 function ringsOf(geometry) {
@@ -312,7 +324,8 @@ Promise.all([
       var p = feature.properties;
       var burnt = p.group === 'spots' && inAnyBurn(feature.geometry.coordinates, burns);
       p._burnt = burnt;
-      return L.circleMarker(latlng, burnt ? STYLE.burnt : (STYLE[p.group] || STYLE.other));
+      if (burnt) return L.circleMarker(latlng, STYLE.burnt);
+      return L.circleMarker(latlng, STYLE[p.kind] || STYLE[p.group] || STYLE.other);
     },
     onEachFeature: function (feature, layer) {
       var p = feature.properties;
@@ -325,7 +338,8 @@ Promise.all([
         html += '<br>' + formatKm(p._km) + ' from the mapped burn edge';
       }
       layer.bindPopup(html);
-      layer.addTo(p.group === 'spots' ? spotsLayer : otherLayer);
+      layer.addTo(p.group === 'spots' ? spotsLayer
+                : p.kind === 'parking' ? parkingLayer : supplyLayer);
       if (p.group === 'spots') ranked.push({ props: p, layer: layer });
     }
   });
@@ -352,7 +366,8 @@ L.control.layers(baseLayers, {
   'Burnt area (Copernicus)': fireTiles,
   'Burnt outline (EFFIS)': burntOutline,
   'Spots': spotsLayer,
-  'Parking &amp; supplies': otherLayer
+  'Campsite &amp; shops': supplyLayer,
+  'Parking': parkingLayer
 }, { collapsed: isSmall }).addTo(map);
 
 L.control.scale({ imperial: false }).addTo(map);
@@ -369,7 +384,9 @@ legend.onAdd = function () {
     + '<div class="row"><span class="swatch line"></span>Burnt outline (EFFIS)</div>'
     + '<div class="row"><span class="swatch" style="background:#1565c0"></span>Spot</div>'
     + '<div class="row"><span class="swatch burnt" style="background:#1565c0"></span>Spot inside burnt area</div>'
-    + '<div class="row"><span class="swatch" style="background:#546e7a"></span>Parking / supplies</div>'
+    + '<div class="row"><span class="swatch camp" style="background:#2e7d32"></span>Campsite</div>'
+    + '<div class="row"><span class="swatch" style="background:#546e7a"></span>Shops</div>'
+    + '<div class="row"><span class="swatch park"></span>Parking <em>(off by default)</em></div>'
     + '<div class="note"><span class="warn">The whole massif is closed to the public.</span>'
     + ' Check official ONF and prefecture notices before travelling.</div>'
     + '<details class="note"><summary>About the data</summary>'
