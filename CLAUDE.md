@@ -96,7 +96,12 @@ chrome.exe --headless=new --disable-gpu --hide-scrollbars \
 ```
 
 Check **both** `1280,900` and `390,780` — phones are a priority, and the two
-layouts fail differently. Looking at the rendered image is what catches swapped
+layouts fail differently. On Windows, headless Chrome clamps the window to
+~500 px wide: ask for `390,780` and the page lays out at ~500 px while the
+screenshot is cropped to 390, so anything in the right-hand 110 px looks cut
+off when it is not. Check `window.innerWidth` (`--dump-dom` on a page that
+writes it into the title) before believing a narrow-layout bug, and use
+`500,780` for a narrow check that isn't lying to you. Looking at the rendered image is what catches swapped
 coordinates, legend colours that don't match the tiles, and controls that cover
 the map. A syntax check alone proves nothing.
 
