@@ -43,6 +43,55 @@ Neither source is sufficient alone, so both are on the map at once:
 that is not flagged is *not* known to be unburnt, and the legend says so. Keep
 that caveat visible in any change you make to the fire layers or the legend.
 
+## The closed forests come from ONF, and that service *is* queryable
+
+`scripts/build_closures.py` pulls the three closed forests from the ONF's
+"Forêts publiques de France métropolitaine" layer, an ArcGIS feature service on
+their open-data portal (`geo-onf.opendata.arcgis.com`):
+
+```
+https://services1.arcgis.com/Y4HgaQpzkE7kenlE/arcgis/rest/services/
+  For%C3%AAts_publiques_de_France_m%C3%A9tropolitaine/FeatureServer/12
+```
+
+Two things about it that cost time to find:
+
+- **The layer id is 12, not 0.** The service has exactly one layer and it is
+  not at the usual index, so `/0` returns an empty metadata document rather
+  than an error.
+- **Unlike Copernicus, it supports `Query`**, so `?f=geojson` with a `where`
+  clause returns real geometry. Don't assume an ArcGIS service is raster-only
+  because the fire one is — check `capabilities` first.
+
+Forests are selected by *name*, plus `cinse_dep = '77'` and `cdom_frt = 'OUI'`:
+objectids are not stable across republications, and both "Commanderie" and
+"Fontainebleau" also match forests in other départements (Corrèze, Drôme). The
+script fails loudly if it does not get exactly three.
+
+The closure applies to each forest **in full**, so the ownership boundary *is*
+the closed area — no sub-area geometry is needed. This is a "which forest is
+closed" layer, not a cadastral one, and it is thinned twice on that basis:
+simplified with Douglas-Peucker at 15 m, and stripped of detached parts under
+4 ha. Together those take ~15 000 vertices to ~1 900 and 315 kB to 105 kB.
+
+Each forest is one dominant block plus a long tail of slivers, so the 4 ha cut
+drops 277 of 292 parts for 0.56% of the closed area, leaving four to six parts
+each. **The cost is not spread evenly** — check this before raising it again:
+Fontainebleau loses 0.19% and Trois-Pignons 0.57%, but la Commanderie is
+genuinely fragmented and loses 3.06% (163 parts, 80 ha).
+
+The omission is recorded in the file (`omitted_parts`, `omitted_ha`) and stated
+in the map's legend, because this layer is what tells someone a forest is
+off-limits. Popup areas are measured *before* the cull: they describe the
+forest, not the polygon drawn for it.
+
+Each forest gets its own colour, keyed by the `key` property the script derives
+(`fontainebleau`, `trois-pignons`, `commanderie`) so `index.html` never matches
+on accented French. They are **not** the ONF PDF's own green/magenta/orange:
+green and orange are already the campsite and the burn on this map. Purple,
+teal and orange are used instead — la Commanderie is far enough south of the
+fire to afford the warm one.
+
 ## Things that do not work — don't spend time on them
 
 - **There is no vector version of Copernicus EMSR894.** Their ArcGIS
@@ -57,9 +106,8 @@ that caveat visible in any change you make to the fire layers or the legend.
 - **EFFIS GetCapabilities takes minutes.** Go straight to GetFeature.
 - **OpenStreetMap only has one of the three closed forests**
   (`Forêt Domaniale des Trois Pignons`, relation 16615234). Fontainebleau and
-  la Commanderie do not exist there as forest boundaries, which is why the
-  closed-area layer is not built. IGN's public forest dataset is the likely
-  source if it is picked up later.
+  la Commanderie do not exist there as forest boundaries. Don't go back to OSM
+  for these — the closure layer uses the ONF service instead (see below).
 
 ## Gotchas in the data
 
@@ -126,10 +174,11 @@ The page fetches GeoJSON, so it needs a real server; `file://` will not work.
   state forests closed in full: **Fontainebleau**, **Trois-Pignons** and
   **la Commanderie**. It is the reference for *which* forests are closed. It is
   a scanned image with no text layer, so nothing can be extracted from it
-  programmatically; it is not a geometry source.
+  programmatically; it is not a geometry source. The boundaries come from the
+  ONF service instead — see below.
 
 ## Deliberate omissions
 
-Closed-area polygons, fire progression over time, damage-severity grading, and
-geolocation. Geolocation is intentional: this is a planning map used before
-travelling, not a navigation aid for use in the forest.
+Fire progression over time, damage-severity grading, and geolocation.
+Geolocation is intentional: this is a planning map used before travelling, not
+a navigation aid for use in the forest.

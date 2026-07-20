@@ -42,6 +42,9 @@
   .legend .row em { color: #555; font-size: 12px; font-style: normal; }
   /* Copernicus renders the burn as a yellow fill with a red edge. */
   .legend .swatch.area { border-radius: 3px; background: #d8d23c; border-color: #d32f2f; }
+  /* Outline-only, matching how the closed forests are drawn. The colour of
+     each is set inline, from the same palette the map uses. */
+  .legend .swatch.closed { border-radius: 3px; box-shadow: none; background: none; }
   .legend .swatch.line {
     height: 0; border: 0; border-top: 2px dashed #b71c1c;
     box-shadow: none; border-radius: 0;
@@ -100,7 +103,8 @@ var ATTR = {
   ign: '&copy; <a href="https://www.ign.fr/">IGN</a> / G&eacute;oplateforme',
   osm: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   cems: '&copy; <a href="https://mapping.emergency.copernicus.eu/activations/EMSR894/">Copernicus EMS</a> EMSR894',
-  effis: '&copy; <a href="https://forest-fire.emergency.copernicus.eu/">EFFIS</a>'
+  effis: '&copy; <a href="https://forest-fire.emergency.copernicus.eu/">EFFIS</a>',
+  onf: '&copy; <a href="https://www.onf.fr/">ONF</a>'
 };
 
 /* --- Base maps ----------------------------------------------------- */
@@ -144,6 +148,28 @@ var fireTiles = L.tileLayer(
 ).addTo(map);
 
 var burntOutline = L.layerGroup().addTo(map);
+
+/* --- Closed forests -------------------------------------------------- *
+ * The three state forests closed in full by the ONF order of 17 July
+ * 2026. This is the ownership boundary of each forest, from the ONF's own
+ * open dataset -- the closure applies to the whole forest, so the boundary
+ * *is* the closed area. It is deliberately drawn faintly and beneath
+ * everything else: it covers most of the map, and it is context for the
+ * fire and the spots rather than the thing being read off the map.
+ * -------------------------------------------------------------------- */
+var closuresLayer = L.layerGroup().addTo(map);
+
+/* One colour each, so the three can be told apart where they meet -- keyed by
+   the slug build_closures.py derives, to keep accented French out of the
+   matching. Deliberately *not* the colours of the ONF's own PDF: its green and
+   orange are this map's campsite and burn, and la Commanderie is the only one
+   far enough from the fire to afford a warm colour. */
+var CLOSED_COLOUR = {
+  'fontainebleau': '#6a1b9a',   /* purple */
+  'trois-pignons': '#00838f',   /* teal   */
+  'commanderie':   '#ef6c00'    /* orange */
+};
+var CLOSED_FALLBACK = '#6a1b9a';
 
 /* --- Spots ---------------------------------------------------------- */
 var STYLE = {
@@ -295,12 +321,34 @@ function extendBounds(bounds, coords) {
 
 Promise.all([
   loadJSON('data/spots.geojson'),
-  loadJSON('data/fire_effis.geojson').catch(function () { return null; })
+  loadJSON('data/fire_effis.geojson').catch(function () { return null; }),
+  loadJSON('data/closures.geojson').catch(function () { return null; })
 ]).then(function (results) {
   var spots = results[0];
   var fire = results[1];
+  var closures = results[2];
   var burns = fire ? fire.features : [];
   var burntDate = fire && fire.last_update ? fire.last_update.slice(0, 10) : 'unknown date';
+
+  if (closures) {
+    L.geoJSON(closures, {
+      style: function (feature) {
+        var colour = CLOSED_COLOUR[feature.properties.key] || CLOSED_FALLBACK;
+        return { color: colour, weight: 2, opacity: 0.85,
+                 fillColor: colour, fillOpacity: 0.07 };
+      },
+      attribution: ATTR.onf,
+      onEachFeature: function (feature, layer) {
+        var p = feature.properties;
+        layer.bindPopup(
+          '<strong>' + p.name + '</strong><br>' +
+          p.area_ha.toLocaleString('en') + ' ha<br>' +
+          '<span style="color:#b71c1c"><strong>Closed to the public</strong></span>' +
+          ' since ' + p.closed_since + '<br><em>ONF order &mdash; whole forest</em>'
+        );
+      }
+    }).addTo(closuresLayer);
+  }
 
   if (fire) {
     L.geoJSON(fire, {
@@ -365,6 +413,7 @@ var isSmall = window.matchMedia('(max-width: 600px)').matches;
 L.control.layers(baseLayers, {
   'Burnt area (Copernicus)': fireTiles,
   'Burnt outline (EFFIS)': burntOutline,
+  'Closed forests (ONF)': closuresLayer,
   'Spots': spotsLayer,
   'Campsite &amp; shops': supplyLayer,
   'Parking': parkingLayer
@@ -382,18 +431,30 @@ legend.onAdd = function () {
     + '<summary><h1>Fontainebleau fire &amp; spots</h1></summary>'
     + '<div class="row"><span class="swatch area"></span>Burnt area (Copernicus)</div>'
     + '<div class="row"><span class="swatch line"></span>Burnt outline (EFFIS)</div>'
+    + '<div class="row"><span class="swatch closed" style="border-color:'
+    + CLOSED_COLOUR['fontainebleau'] + '"></span>Fontainebleau <em>(closed)</em></div>'
+    + '<div class="row"><span class="swatch closed" style="border-color:'
+    + CLOSED_COLOUR['trois-pignons'] + '"></span>Trois-Pignons <em>(closed)</em></div>'
+    + '<div class="row"><span class="swatch closed" style="border-color:'
+    + CLOSED_COLOUR['commanderie'] + '"></span>la Commanderie <em>(closed)</em></div>'
     + '<div class="row"><span class="swatch" style="background:#1565c0"></span>Spot</div>'
     + '<div class="row"><span class="swatch burnt" style="background:#1565c0"></span>Spot inside burnt area</div>'
     + '<div class="row"><span class="swatch camp" style="background:#2e7d32"></span>Campsite</div>'
     + '<div class="row"><span class="swatch" style="background:#546e7a"></span>Shops</div>'
     + '<div class="row"><span class="swatch park"></span>Parking <em>(off by default)</em></div>'
-    + '<div class="note"><span class="warn">The whole massif is closed to the public.</span>'
-    + ' Check official ONF and prefecture notices before travelling.</div>'
+    + '<div class="note"><span class="warn">All three outlined forests are closed'
+    + ' to the public in full</span>, since 17 July 2026. Check official ONF and'
+    + ' prefecture notices before travelling.</div>'
     + '<details class="note"><summary>About the data</summary>'
     + 'Yellow burn overlay: Copernicus EMS EMSR894 (its green frame is just the'
     + ' mapped area of interest, not a burn). Dashed outline: EFFIS, satellite-derived,'
     + ' coarse and updated with a delay &mdash; it understates the burnt area,'
     + ' so a spot without a red ring is <em>not</em> necessarily unburnt.'
+    + ' Coloured outlines: the ONF\'s own boundaries for the three closed state'
+    + ' forests. The closure covers each forest whole, so the boundary is the'
+    + ' closed area &mdash; but it is dated, and closures outlive the fire.'
+    + ' Detached parcels under 4 ha are not drawn: 0.6% of the closed area'
+    + ' overall, but 3% of la Commanderie, which is the fragmented one.'
     + '</details>'
     + '</details>';
   L.DomEvent.disableClickPropagation(d);
